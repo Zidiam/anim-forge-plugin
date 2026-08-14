@@ -1,0 +1,6 @@
+# The built plugin is a release attachment, not a file in the repo: a binary
+# that shadows the source it was built from is the thing this repo exists to
+# make unnecessary.
+build/
+*.rbxm
+.DS_Store
