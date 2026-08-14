@@ -1835,7 +1835,7 @@ getMoreText.TextSize = 13
 getMoreText.TextXAlignment = Enum.TextXAlignment.Left
 getMoreText.TextWrapped = true
 getMoreText.TextColor3 = C.dim
-getMoreText.Text = "One credit is one standard animation. Credits never expire, and the bigger the pack the cheaper each credit."
+getMoreText.Text = "One credit is one standard animation. Take a monthly plan for the cheaper rate, or buy a pack outright — packs never expire, and the bigger the pack the cheaper each credit."
 getMoreText.LayoutOrder = 2
 getMoreText.Parent = getMoreCard
 
@@ -1845,6 +1845,22 @@ getMoreText.Parent = getMoreCard
 -- one — which is also why there is no compiled fallback for it. No packs means
 -- the shop is closed; then this stays hidden rather than showing an empty box
 -- that promises something to buy.
+-- Plans first, packs under them: a plan is the cheaper rate and the one most
+-- people should take, and burying it under five pack prices would hide that.
+local plansText = Instance.new("TextLabel")
+plansText.Size = UDim2.new(1, 0, 0, 0)
+plansText.AutomaticSize = Enum.AutomaticSize.Y
+plansText.BackgroundTransparency = 1
+plansText.Font = Enum.Font.SourceSans
+plansText.TextSize = 13
+plansText.TextXAlignment = Enum.TextXAlignment.Left
+plansText.TextWrapped = true
+plansText.TextColor3 = C.text
+plansText.Text = ""
+plansText.Visible = false
+plansText.LayoutOrder = 3
+plansText.Parent = getMoreCard
+
 local packsText = Instance.new("TextLabel")
 packsText.Size = UDim2.new(1, 0, 0, 0)
 packsText.AutomaticSize = Enum.AutomaticSize.Y
@@ -1856,7 +1872,7 @@ packsText.TextWrapped = true
 packsText.TextColor3 = C.text
 packsText.Text = ""
 packsText.Visible = false
-packsText.LayoutOrder = 3
+packsText.LayoutOrder = 4
 packsText.Parent = getMoreCard
 
 -- Compiled-in fallbacks keep both boxes useful before the first entitlement
@@ -1866,7 +1882,7 @@ packsText.Parent = getMoreCard
 local STORE_URL_FALLBACK = "https://animforge-production.up.railway.app"
 local GAME_URL_FALLBACK = "https://www.roblox.com/games/91057802147407"
 
-local storeBox = urlBox(getMoreCard, 4, STORE_URL_FALLBACK)
+local storeBox = urlBox(getMoreCard, 5, STORE_URL_FALLBACK)
 
 local getMoreHint = Instance.new("TextLabel")
 getMoreHint.Size = UDim2.new(1, 0, 0, 0)
@@ -1878,7 +1894,7 @@ getMoreHint.TextXAlignment = Enum.TextXAlignment.Left
 getMoreHint.TextWrapped = true
 getMoreHint.TextColor3 = C.dim
 getMoreHint.Text = "Copy the link (Ctrl+A, Ctrl+C) and open it in a browser. You'll get a code — paste it into Redeem a code, below."
-getMoreHint.LayoutOrder = 5
+getMoreHint.LayoutOrder = 6
 getMoreHint.Parent = getMoreCard
 
 -- The Robux route, quieter: it is the better one for someone already on Roblox
@@ -1894,10 +1910,10 @@ robuxHint.TextXAlignment = Enum.TextXAlignment.Left
 robuxHint.TextWrapped = true
 robuxHint.TextColor3 = C.dim
 robuxHint.Text = "Or buy with Robux inside the Anim Forge experience — those credits land on your account by themselves, no code to type:"
-robuxHint.LayoutOrder = 6
+robuxHint.LayoutOrder = 7
 robuxHint.Parent = getMoreCard
 
-local gameUrlBox = urlBox(getMoreCard, 7, GAME_URL_FALLBACK)
+local gameUrlBox = urlBox(getMoreCard, 8, GAME_URL_FALLBACK)
 
 --- The server owns the experience URL, so it can move without a plugin release.
 function setGameUrl(url)
@@ -1918,6 +1934,26 @@ function setStoreInfo(store)
 	if type(store.url) == "string" and store.url ~= "" then
 		storeBox.Text = store.url
 	end
+	-- Monthly plans. Same contract as packs: the server owns every figure, and a
+	-- missing list means "not sold" rather than "empty list".
+	local planLines = {}
+	if type(store.plans) == "table" then
+		for _, plan in ipairs(store.plans) do
+			local n = type(plan) == "table" and tonumber(plan.credits) or nil
+			if n and type(plan.priceText) == "string" and type(plan.tier) == "string" then
+				local name = plan.tier:sub(1, 1):upper() .. plan.tier:sub(2)
+				table.insert(
+					planLines,
+					("%s  ·  %s a month  ·  %s"):format(name, fmtCredits(n), plan.priceText)
+				)
+			end
+		end
+	end
+	if #planLines > 0 then
+		plansText.Text = "MONTHLY PLANS — the allowance resets each month\n" .. table.concat(planLines, "\n")
+	end
+	plansText.Visible = #planLines > 0
+
 	local packs = store.packs
 	if type(packs) ~= "table" then
 		packsText.Visible = false
@@ -1935,7 +1971,9 @@ function setStoreInfo(store)
 			table.insert(lines, ("%s credit%s  ·  %s"):format(fmtCredits(n), n == 1 and "" or "s", pack.priceText))
 		end
 	end
-	packsText.Text = table.concat(lines, "\n")
+	if #lines > 0 then
+		packsText.Text = (#planLines > 0 and "CREDIT PACKS — never expire\n" or "") .. table.concat(lines, "\n")
+	end
 	packsText.Visible = #lines > 0
 end
 
@@ -1951,7 +1989,7 @@ getMoreStatus.TextXAlignment = Enum.TextXAlignment.Left
 getMoreStatus.TextWrapped = true
 getMoreStatus.TextColor3 = C.dim
 getMoreStatus.Text = ""
-getMoreStatus.LayoutOrder = 9
+getMoreStatus.LayoutOrder = 10
 getMoreStatus.Parent = getMoreCard
 
 -- Entitlement refreshes on tab switches and job events, never on a timer. The
@@ -2001,7 +2039,7 @@ local gotCreditsButton = actionButton(getMoreCard, {
 	height = 30,
 	textSize = 14,
 	iconSize = 14,
-	layoutOrder = 8,
+	layoutOrder = 9,
 })
 gotCreditsButton.MouseButton1Click:Connect(function()
 	refreshEntitlement()
@@ -2040,7 +2078,7 @@ do
 	redeemText.TextXAlignment = Enum.TextXAlignment.Left
 	redeemText.TextWrapped = true
 	redeemText.TextColor3 = C.dim
-	redeemText.Text = "Have a credit code? Paste it here and the credits are added to your account."
+	redeemText.Text = "Have a code? Paste it here. A credit code tops up your balance; a plan code turns your monthly allowance on — you only ever paste that one once."
 	redeemText.LayoutOrder = 2
 	redeemText.Parent = redeemCard
 
@@ -2440,6 +2478,65 @@ end)
 ]]
 local updateLocked = false
 local setUpdateUrl
+local setUpdateNudge
+
+--[[
+	The gentle half of the same idea: a newer build exists, this one still works.
+
+	Studio updates plugins it installed from the Creator Store; it cannot update
+	one dropped into the Plugins folder by hand, and this is. So the only way a
+	user ever learns a new build is out is if the plugin says so — and the only
+	alternative to saying it here is saying nothing until the hard lockout
+	arrives mid-task. Dismissible, and shown once per session: a banner that
+	cannot be closed is an advert.
+]]
+do
+	local nudge = card(settingsPage, 0)
+	nudge.Visible = false
+	nudge.BackgroundColor3 = C.field
+
+	local text = Instance.new("TextLabel")
+	text.Size = UDim2.new(1, -28, 0, 0)
+	text.AutomaticSize = Enum.AutomaticSize.Y
+	text.BackgroundTransparency = 1
+	text.Font = Enum.Font.SourceSans
+	text.TextSize = 13
+	text.TextXAlignment = Enum.TextXAlignment.Left
+	text.TextWrapped = true
+	text.TextColor3 = C.text
+	text.LayoutOrder = 1
+	text.Parent = nudge
+
+	local close = Instance.new("TextButton")
+	close.AnchorPoint = Vector2.new(1, 0)
+	close.Position = UDim2.new(1, 0, 0, 0)
+	close.Size = UDim2.new(0, 22, 0, 22)
+	close.BackgroundTransparency = 1
+	close.Font = Enum.Font.SourceSansBold
+	close.TextSize = 15
+	close.TextColor3 = C.dim
+	close.Text = "✕"
+	close.ZIndex = 3
+	close.Parent = nudge
+	close.MouseButton1Click:Connect(function()
+		nudge.Visible = false
+	end)
+
+	local shown = false
+	function setUpdateNudge(latestVersion)
+		-- Once per session. refreshEntitlement runs on every tab switch and job
+		-- event, so re-showing on each would make the close button pointless.
+		if shown then
+			return
+		end
+		shown = true
+		local v = type(latestVersion) == "string" and latestVersion ~= "" and latestVersion or nil
+		text.Text = (v and ("Anim Forge %s is out — you have %s."):format(v, Version.VERSION) or "A newer Anim Forge is out.")
+			.. " Download it from the address below and drop it in your Plugins folder, replacing the old file."
+		nudge.Visible = true
+	end
+end
+
 do
 local updateCard = card(root, 89)
 updateCard.Visible = false
@@ -2602,6 +2699,13 @@ function refreshEntitlement()
 		if type(ent.store) == "table" then
 			setStoreInfo(ent.store)
 			setUpdateUrl(ent.store.url)
+		end
+		-- A newer build exists but this one still works. Said once, quietly, and
+		-- dismissible: nobody installed this by hand to be nagged, and the
+		-- alternative to mentioning it now is the hard lockout arriving later
+		-- with no warning.
+		if type(compat) == "table" and compat.updateAvailable == true and setUpdateNudge then
+			setUpdateNudge(compat.latestVersion)
 		end
 		if updateLocked then
 			return

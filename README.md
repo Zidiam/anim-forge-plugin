@@ -10,7 +10,7 @@ because installing a plugin file from the internet is a real thing to ask of
 someone, and the only honest answer to "why should I trust this?" is to hand
 over every line and invite you to check.
 
-**Plugin 1.5.0 (build 133)** · MIT licensed · [website](https://animforge-production.up.railway.app) · [report a bug](https://github.com/Zidiam/anim-forge-plugin/issues)
+**Plugin 1.6.0 (build 134)** · MIT licensed · [website](https://animforge-production.up.railway.app) · [report a bug](https://github.com/Zidiam/anim-forge-plugin/issues)
 
 ## Install
 
@@ -150,7 +150,7 @@ plugin itself is free and always will be.
 ## Bugs, and everything else
 
 Open an issue: https://github.com/Zidiam/anim-forge-plugin/issues. Include the plugin version from the Settings
-tab (this tree is 1.5.0, build 133) and what you typed — a prompt that
+tab (this tree is 1.6.0, build 134) and what you typed — a prompt that
 produced something silly is a useful bug report.
 
 ## Licence
