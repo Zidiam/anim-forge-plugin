@@ -14,6 +14,6 @@
 ]]
 
 return {
-	VERSION = "1.6.0",
-	BUILD = 134,
+	VERSION = "1.6.1",
+	BUILD = 135,
 }

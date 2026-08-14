@@ -1177,6 +1177,47 @@ chatHeaderLabel.Text = ""
 chatHeaderLabel.Parent = chatHeaderRow
 
 
+-- The server refuses prompts over 2000 characters; clamping at the box means
+-- nobody types an essay only to have it bounced after a submit. The counter
+-- stays hidden until the limit is actually in sight.
+local PROMPT_CHAR_LIMIT = 2000
+local function capTextBox(box)
+	local counter = Instance.new("TextLabel")
+	counter.AnchorPoint = Vector2.new(1, 1)
+	counter.Position = UDim2.new(1, -2, 1, -1)
+	counter.Size = UDim2.new(0, 90, 0, 13)
+	counter.BackgroundTransparency = 1
+	counter.Font = Enum.Font.SourceSans
+	counter.TextSize = 11
+	counter.TextXAlignment = Enum.TextXAlignment.Right
+	counter.TextColor3 = C.dim
+	counter.Text = ""
+	counter.Visible = false
+	counter.Parent = box
+	box:GetPropertyChangedSignal("Text"):Connect(function()
+		local text = box.Text
+		if #text > PROMPT_CHAR_LIMIT then
+			-- never split a multi-byte character: back the cut up off any
+			-- UTF-8 continuation byte
+			local cut = PROMPT_CHAR_LIMIT
+			while cut > 0 do
+				local nextByte = string.byte(text, cut + 1)
+				if nextByte == nil or nextByte < 0x80 or nextByte >= 0xC0 then
+					break
+				end
+				cut -= 1
+			end
+			box.Text = string.sub(text, 1, cut)
+			return -- setting Text re-fires this handler with the clamped value
+		end
+		counter.Visible = #text >= PROMPT_CHAR_LIMIT - 300
+		if counter.Visible then
+			counter.Text = #text .. " / " .. PROMPT_CHAR_LIMIT
+			counter.TextColor3 = if #text >= PROMPT_CHAR_LIMIT then C.warn else C.dim
+		end
+	end)
+end
+
 local promptBox = Instance.new("TextBox")
 promptBox.Size = UDim2.new(1, 0, 0, 72)
 promptBox.BackgroundColor3 = C.field
@@ -1202,6 +1243,7 @@ do
 	p.PaddingRight = UDim.new(0, 8)
 	p.Parent = promptBox
 end
+capTextBox(promptBox)
 
 --[[
 	How much effort to spend on this one.
@@ -3788,6 +3830,7 @@ local function makeJobCard(promptText)
 		pad.PaddingRight = UDim.new(0, 8)
 		pad.Parent = critiqueBox
 	end
+	capTextBox(critiqueBox)
 
 	local refineButton, setRefineText = actionButton(holder, {
 		icon = "refine",
